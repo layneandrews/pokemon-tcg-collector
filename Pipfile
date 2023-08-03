@@ -4,8 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-
-[dev-packages]
 flask = "2.2.2"
 flask-sqlalchemy = "2.5.1"
 flask-migrate = "3.1.0"
@@ -20,6 +18,8 @@ gunicorn = "20.1.0"
 honcho = "1.1.0"
 python-dotenv = "*"
 flask-bcrypt = "*"
+
+[dev-packages]
 
 [requires]
 python_full_version = "3.8.13"

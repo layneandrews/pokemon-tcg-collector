@@ -6,17 +6,21 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 db = SQLAlchemy()
 
-class Binder(db.model, SerializerMixin):
+class Binder(db.Model, SerializerMixin):
     __tablename__ = 'binders'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    # card_id = db.Column(db.Integer)
 
     serialize_rules = ('-created_at', '-updated_at', '-user_id')
 
-class User(db.model, SerializerMixin):
+# class BinderCards(db.Model, SerializerMixin):
+
+
+class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
