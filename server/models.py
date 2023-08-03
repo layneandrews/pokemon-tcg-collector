@@ -18,6 +18,8 @@ class Binder(db.Model, SerializerMixin):
     serialize_rules = ('-created_at', '-updated_at', '-user_id')
 
 # class BinderCards(db.Model, SerializerMixin):
+#     __tablename__ = 'bindercards'
+#     id
 
 
 class User(db.Model, SerializerMixin):
