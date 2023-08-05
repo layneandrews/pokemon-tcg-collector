@@ -17,9 +17,20 @@ class Binder(db.Model, SerializerMixin):
 
     serialize_rules = ('-created_at', '-updated_at', '-user_id')
 
-# class BinderCards(db.Model, SerializerMixin):
-#     __tablename__ = 'bindercards'
-#     id
+class Card(db.Model, SerializerMixin):
+    __tablename__ = "cards"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    set = db.Column(db.String)
+    image = db.Column(db.String)
+    
+
+class BinderCards(db.Model, SerializerMixin):
+    __tablename__ = 'bindercards'
+    id = db.Column(db.Integer, primary_key=True)
+    binder_id = db.Column(db.Integer) #needs to be a foreign key I think?
+    card_id = db.Column(db.Integer) #needs to be a foreign key I think?
+
 
 
 class User(db.Model, SerializerMixin):
