@@ -1,13 +1,15 @@
 function Home(){
 
     const handleSub = () => {
+        
         fetch("https://api.pokemontcg.io/v2/cards", {
           method: "GET",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(),
+          body: JSON.stringify,
         })
           .then((r) => r.json())
           .then(data => {
+            
             console.log(data)
           });
       };
