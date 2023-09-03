@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import pokemon from 'pokemontcgsdk'
 
-pokemon.configure({apiKey: '69229fcc-45f1-4202-8bc2-adff8d879632'})
+pokemon.configure({apiKey: 'API_KEY_HERE'})
 
 const styles = {
   splitScreen: {
