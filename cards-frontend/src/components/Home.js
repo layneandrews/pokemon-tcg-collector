@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import pokemon from 'pokemontcgsdk'
 
-pokemon.configure({apiKey: 'API_KEY_HERE'})
+pokemon.configure({apiKey: '69229fcc-45f1-4202-8bc2-adff8d879632'})
 
 const styles = {
   splitScreen: {
@@ -9,58 +9,92 @@ const styles = {
     flexDirection: 'row',
   },
   leftPane: {
-    width: '50%',
+    width: '35%',
   },
   rightPane: {
+    width: '65%',
+  },
+  halfPane: {
     width: '50%',
   },
   selector: {
     color: '#2222AA'
-  }
+  },
+  cardSelector: {
+    width: '100%',
+    padding: '15px 32px',
+    border: 'none',
+    display: 'inline-block',
+  },
+  cardJSON: {
+    width: '100%',
+    overflowX:'auto',
+    whiteSpace:'pre-wrap',
+    fontSize: '12px',
+    fontFamily: 'Times New Roman',
+  },
+  resultsNameTD: {
+    textAlign: 'center',
+    width: '65%',
+  },
+  resultsButtonTD: {
+    textAlign: 'center',
+    width: '35%',
+  },
 }
 
 function Home() {
   const handleSub = (e) => {
     e.preventDefault()
+    setLoading(true)
 
-    const query = e.target[0].value
-    pokemon.card.where({ q: `name:${query}` })
+    const pokemon_name = e.target[0].value
+    pokemon.card.where({ q: `name:${pokemon_name}` })
       .then(result => {
-        console.log(result.data);
         updateResults(result.data)
+        setLoading(false)
     });
   }
 
   const selectCard = (c) => {
     c.preventDefault()
 
-    updateCardName( `${c.target['id'].value} - ${c.target['name'].value}` )
-    updateCardImage( c.target['img'].value )
-    //updateCardImage(c.data)
+    const cardData = new FormData(c.target);
+    updateCardName( `${cardData.get('id')} - ${cardData.get('name')}`)
+    updateCardImage( cardData.get('img_small') )
+    updateCardText( cardData.get('item') )
   }
 
-  const [resultsList, updateResults] = useState([{id:1, name:'test', images: {small:'abc.jpeg'}}])
+  const [loading, setLoading] = useState(false);
 
-  const [cardImageURL, updateCardImage] = useState('https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_272x92dp.png');
-  const [cardName, updateCardName] = useState('Card Title')
+  const [resultsList, updateResults] = useState();
+
+  const [cardImageURL, updateCardImage] = useState();
+  const [cardName, updateCardName] = useState();
+  const [cardText, updateCardText] = useState();
 
   return(
     <div>
-      <h1>Hi this is the home component</h1>
+      <h1>Card Lookup</h1>
         <div style={styles.splitScreen}>
-          <div style={styles.leftPane}>
+          <div style={styles.halfPane}>
             <SearchBar
-              placeholder="Search pokeman cards"
+              placeholder="Search 4 pokeman cards"
               handleSub={handleSub}/>
+            <Spinner
+              loading={loading} />
             <ResultsList
               resultsList={resultsList}
               selectCard={selectCard}
+              loading={loading}
               />
           </div>
-          <div style={styles.rightPane}>
+          <div style={styles.halfPane}>
             <CardDisplay
               cardName={cardName}
-              cardImageURL={cardImageURL}/>
+              cardImageURL={cardImageURL}
+              cardText={cardText}
+              />
           </div>
         </div>
     </div>
@@ -69,8 +103,15 @@ function Home() {
 
 function ResultsList({
   resultsList,
-  selectCard
+  selectCard,
+  loading
 }) {
+  if(
+    (resultsList === undefined || resultsList === null) ||
+    (loading)
+    ) {
+    return (<div></div>);
+  }
   return (
     <div>
       <table>
@@ -83,15 +124,18 @@ function ResultsList({
         <tbody>
           {resultsList.map((item, index) => (
             <tr key={index}>
-              <td>
+              <td style={styles.resultsButtonTD}>
                 <form onSubmit={selectCard}>
-                  <input type="hidden" name='id' value={item.id} />
-                  <input type="hidden" name='name' value={item.name} />
-                  <input type="hidden" name='img' value={item.images.small} />
-                  <button type="submit">{item.id}</button>
+                  <input type='hidden' name='item' value={JSON.stringify(item)} />
+                  <input type='hidden' name='id' value={item.id} />
+                  <input type='hidden' name='name' value={item.name} />
+                  <input type='hidden' name='img_small' value={item.images.small} />
+                  <input type='hidden' name='img_large' value={item.images.large} />
+                  <input type='hidden' name='rules' value={item.rules} />
+                  <button style={styles.cardSelector} type="submit" disabled={loading}>{item.id}</button>
                 </form>
               </td>
-              <td>{item.name}</td>
+              <td style={styles.resultsNameTD}>{item.name}</td>
             </tr>
           ))}
         </tbody>
@@ -112,11 +156,37 @@ function SearchBar({
   )
 }
 
+function Spinner({
+  loading
+}) {
+  if(loading) {
+    return (
+      <div>
+        <svg viewBox="-40 -40 80 80" width='100px' height='100px'>
+            <ellipse cx="0" cy="0" rx="40" ry="10" fill="black" stroke="black">
+              <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="1s" repeatCount="indefinite" />
+            </ellipse>
+            <ellipse cx="0" cy="0" rx="10" ry="40" fill="black" stroke="black">
+              <animateTransform attributeName="transform" type="rotate" from="0" to="-360" dur="2.5s" repeatCount="indefinite" />
+            </ellipse>
+        </svg>
+      </div>
+    );
+  } else {
+    return (<div></div>);
+  }
+}
+
 function CardDisplay({
   cardName,
-  cardImageURL
+  cardImageURL,
+  cardText
 }) {
+  if (cardImageURL === undefined || cardImageURL === null) {
+    return(<div></div>)
+  }
   return (
+  <>
     <div>
       <table>
         <thead>
@@ -130,14 +200,19 @@ function CardDisplay({
           <tr>
             <td>
               <div>
-              <img width='245px' height='342px' src={cardImageURL} alt='pokemon card'/>
+                <img src={cardImageURL} alt='pokemon card' />
               </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <pre style={styles.cardJSON}>{JSON.stringify(JSON.parse(cardText), null, 2)}</pre>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-  )
+  </>)
 }
 
 export default Home
