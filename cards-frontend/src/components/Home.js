@@ -3,6 +3,10 @@ import pokemon from 'pokemontcgsdk'
 
 pokemon.configure({apiKey: '69229fcc-45f1-4202-8bc2-adff8d879632'})
 
+const GLOBAL_PAGE_SIZE = 10
+var mainQuery = ''
+var sortBy = '-set.releaseDate,-number'
+
 const styles = {
   splitScreen: {
     display: 'flex',
@@ -41,19 +45,97 @@ const styles = {
     textAlign: 'center',
     width: '35%',
   },
+  fullWidth: {
+    width: '100%',
+  },
+  hpinput: {
+    width: '5em',
+  },
+}
+
+function buildPokeQuery(sa) {
+  var query = ''
+
+  const name = sa['name'].value
+  const atk_name = sa['atk_name'].value
+  const atk_text = sa['atk_text'].value
+  const supertype = sa['supertype'].value
+  const legality = sa['legality'].value
+  const rules = sa['rules'].value
+  const hpmin = sa['hpmin'].value
+  const hpmax = sa['hpmax'].value
+
+  if ( name !== '' ) {
+    query += 'name:*'+name+'* '
+  }
+  if ( atk_name !== '' ) {
+    query += 'attacks.name:*' + atk_name + '* '
+  }
+  if ( atk_text !== '' ) {
+    query += 'attacks.text:"*' + atk_text + '*" '
+  }
+  if ( supertype !== '' ) {
+    query += 'supertype:' + supertype + ' '
+  }
+  if ( legality !== '' ) {
+    query += 'legalities.' + legality + ':"Legal" '
+  }
+  if ( rules !== '' ) {
+    query += 'rules:"*' + rules + '*" '
+  }
+
+  if ( hpmin !== '' || hpmax !== '' ) {
+
+    query += 'hp:['
+
+    if ( hpmin !== '' ) {
+      query += hpmin
+    } else {
+      query += '*'
+    }
+
+    query += ' TO '
+
+    if ( hpmax !== '' ) {
+      query += hpmax
+    } else {
+      query += '*'
+    }
+
+    query += '] '
+  }
+
+  return query;
 }
 
 function Home() {
-  const handleSub = (e) => {
+  //var mainQuery = ''
+  const searchRequest = (e) => {
     e.preventDefault()
     setLoading(true)
 
-    const pokemon_name = e.target[0].value
-    pokemon.card.where({ q: `name:${pokemon_name}` })
+    mainQuery = buildPokeQuery(e.target);
+
+    console.log(mainQuery)
+    pokemon.card.where({ q: mainQuery, orderBy: sortBy, page: 1, pageSize: GLOBAL_PAGE_SIZE })
       .then(result => {
-        updateResults(result.data)
+        console.log(result)
+        updateResults(result)
         setLoading(false)
     });
+  }
+
+  const changePage = (e) => {
+    e.preventDefault()
+
+    setLoading(true)
+    console.log(e)
+    pokemon.card.where({ q: mainQuery, orderBy: sortBy, page: e.target['id'], pageSize: GLOBAL_PAGE_SIZE })
+      .then(result => {
+        console.log(result)
+        updateResults(result)
+        setLoading(false)
+      })
   }
 
   const selectCard = (c) => {
@@ -68,7 +150,6 @@ function Home() {
   const [loading, setLoading] = useState(false);
 
   const [resultsList, updateResults] = useState();
-
   const [cardImageURL, updateCardImage] = useState();
   const [cardName, updateCardName] = useState();
   const [cardText, updateCardText] = useState();
@@ -79,14 +160,14 @@ function Home() {
         <div style={styles.splitScreen}>
           <div style={styles.halfPane}>
             <SearchBar
-              placeholder="Search 4 pokeman cards"
-              handleSub={handleSub}/>
+              handleSub={searchRequest}/>
             <Spinner
               loading={loading} />
             <ResultsList
               resultsList={resultsList}
               selectCard={selectCard}
               loading={loading}
+              changePage={changePage}
               />
           </div>
           <div style={styles.halfPane}>
@@ -104,7 +185,8 @@ function Home() {
 function ResultsList({
   resultsList,
   selectCard,
-  loading
+  loading,
+  changePage
 }) {
   if(
     (resultsList === undefined || resultsList === null) ||
@@ -112,7 +194,20 @@ function ResultsList({
     ) {
     return (<div></div>);
   }
+  var pages = 0
+  var pageButtons = []
+  if ( resultsList.page !== undefined ) {
+    pages = Math.ceil(resultsList.totalCount / resultsList.pageSize)
+    // pages = Array(pages).keys()
+    for (let i = 1; i <= pages; i++) {
+      pageButtons.push(<button id={i} key={i} onClick={changePage}>{i}</button>)
+    }
+  }
   return (
+    <>
+    <div>
+      {pageButtons}
+    </div>
     <div>
       <table>
         <thead>
@@ -122,7 +217,7 @@ function ResultsList({
           </tr>
         </thead>
         <tbody>
-          {resultsList.map((item, index) => (
+          {resultsList.data.map((item, index) => (
             <tr key={index}>
               <td style={styles.resultsButtonTD}>
                 <form onSubmit={selectCard}>
@@ -141,17 +236,69 @@ function ResultsList({
         </tbody>
       </table>
     </div>
+    </>
   )
 }
 
 function SearchBar({
-  placeholder,
   handleSub
 }) {
   return (
     <form onSubmit={handleSub}>
-      <input type="text" placeholder={placeholder}/>
-      <button type="submit">Search</button>
+      <table>
+        <thead>
+          <tr>
+            <td>Search Fields:</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <label>Name: </label>
+            </td><td>
+              <input type="text" name="name" placeholder="Name" style={styles.fullWidth}/><br/>
+            </td></tr><tr><td>
+              <label>Attack Name: </label>
+            </td><td>
+              <input type="text" name="atk_name" placeholder="Attack Name" style={styles.fullWidth}/><br/>
+            </td></tr><tr><td>
+              <label>Attack Text: </label>
+            </td><td>
+              <input type="text" name="atk_text" placeholder="Attack Text" style={styles.fullWidth}/><br/>
+            </td></tr><tr><td>
+              <label>Supertype: </label>
+            </td><td>
+              <select name="supertype" id="supertype-select" style={styles.fullWidth} >
+                <option value="">--Choose a Supertype--</option>
+                <option value="pokemon">Pokemon</option>
+                <option value="energy">Energy</option>
+                <option value="trainer">Trainer</option>
+              </select><br/>
+            </td></tr><tr><td>
+              <label>Legality: </label>
+            </td><td>
+              <select name="legality" id="legality-select" style={styles.fullWidth} >
+                <option value="">--Choose a Legality--</option>
+                <option value="standard">Standard</option>
+                <option value="expanded">Expanded</option>
+                <option value="unlimited">Unlimited</option>
+              </select><br/>
+            </td></tr><tr><td>
+              <label>Rules Text: </label>
+            </td><td>
+              <input type="text" name="rules" placeholder="Rules Text" style={styles.fullWidth} /><br/>
+            </td></tr><tr><td>
+              <label>HP Range: </label>
+            </td><td>
+              <input type="number" name="hpmin" step="10" min="0" style={styles.hpinput} />
+              &nbsp;to&nbsp;
+              <input type="number" name="hpmax" step="10" min="10" style={styles.hpinput} />
+            </td></tr><tr><td>
+              <button type="submit">Search</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </form>
   )
 }
