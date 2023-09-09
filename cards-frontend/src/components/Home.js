@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import pokemon from 'pokemontcgsdk'
 
-pokemon.configure({apiKey: '69229fcc-45f1-4202-8bc2-adff8d879632'})
-
 const GLOBAL_PAGE_SIZE = 10
 var mainQuery = ''
 var sortBy = '-set.releaseDate,-number'
+var CONFIG = require('./config.json')
+
+pokemon.configure({apiKey: CONFIG.API_KEY})
 
 const styles = {
   splitScreen: {
